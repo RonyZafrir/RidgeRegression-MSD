@@ -1,6 +1,6 @@
 """
     Codes for reproducing:
-    Figure 2, K-fold cross-validation on Million Song Dataset and Flight Dataset
+    Figure 2, K-fold cross-validation on Million Song Dataset 
 """
 
 import matplotlib as mpl
