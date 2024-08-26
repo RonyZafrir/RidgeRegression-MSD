@@ -1,5 +1,5 @@
 """
-    Code for reproducing figure 2 (left) - ridge regression cross-validation on the Million Song Dataset (msd)
+    Code for reproducing figure 2 - ridge regression cross-validation on the Million Song Dataset (msd)
 """
 
 import matplotlib as mpl
@@ -35,9 +35,11 @@ lbd_seq = np.linspace(0, 0.6, steps)
 cv_error = np.zeros((steps, K))
 
 
-# cross validation
+
 '''
-for the error bar we average over 90 = q - 10 different sub-datasets
+cross validation
+
+for the error bar, we average over 90 = q - 10 different sub-datasets
 for the test error, we train on 1000 data points and fit on 9000 test datapoints
 '''
 for k in range(q - 10):
@@ -66,9 +68,9 @@ for i in range(steps):
         break
 
 # test error
-X_train = msd[n * (q - 10): n * (q - 9), 1:]
+X_train = msd[n * (q - 10): n * (q - 9), 1:] #1000x90
 Y_train = msd[n * (q - 10): n * (q - 9), 0]
-X_test = msd[n * (q - 9): n * q, 1:]
+X_test = msd[n * (q - 9): n * q, 1:] #9000x90
 Y_test = msd[n * (q - 9): n * q, 0]
 test_error = np.zeros(steps)
 
@@ -78,8 +80,8 @@ for i in range(steps):
         X_train.T @ X_train / n + lbd * np.identity(p)) @ X_train.T @ Y_train / n
     test_error[i] = np.linalg.norm(Y_test - X_test @ beta_ridge) ** 2 / (9 * n)
 
-lbd_smallest = lbd_seq[np.argmin(test_error)]
 lbd_smallest_idx = np.argmin(test_error)
+lbd_smallest = lbd_seq[lbd_smallest_idx]
 
 
 lbd_theory = gamma
@@ -105,7 +107,5 @@ plt.ylabel('CV test error', fontsize=13)
 plt.title('MSD CV', fontsize=13)
 plt.show()
 
-print(test_error[lbd_cv_debiased_idx], test_error[lbd_cv_idx], test_error[lbd_smallest_idx])
-print("Debias lambda improve test error by", test_error[lbd_cv_idx] - test_error[lbd_cv_debiased_idx])
 
 
