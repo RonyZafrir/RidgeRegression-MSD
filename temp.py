@@ -1,43 +1,68 @@
+'''
+    Code for reproducing figure 2 - ridge regression cross-validation on the Million Song Dataset (msd)
+'''
+
+import matplotlib as mpl
+import numpy as np
+import pandas
+from numpy import sqrt
+import matplotlib.pyplot as plt
+import time
+mpl.use('tkAgg')
+start_time = time.time()
+
+# importing the data
+msd = pandas.read_table('YearPredictionMSD.txt',delimiter=',', nrows=100000).values
+
+# standardizing the data
+def standardize(Y):
+    return (Y - np.mean(Y)) / np.std(Y)
+
+
 # choosing lambda for ridge regression using 5-fold CV:
-m = data.shape[0]
-p = data.shape[1] - 1
-for i in range(data.shape[1]):
-    # standardize each column i.e. feature
-    data[:, i] = standardize(data[:, i])
+for col in range(msd.shape[1]):
+    # standardize each column (=feature)
+    msd[:, col] = standardize(msd[:, col])
+
+# matrix dimensions
+m = msd.shape[0]
+p = msd.shape[1] - 1
+print("Num of data points is", m, "and Num of features is",p )
+
 np.random.seed(130)
-data = np.random.permutation(data)
+msd = np.random.permutation(msd) # shuffles the rows
 n = 1000
 K = 5
-q = int(m / n) # num of segments that the data can be divided into
+q = int(m / n) # num of segments that the whole data can be divided into
 gamma = p / n
-batch_size = n / K
+n_0 = n / K
 steps = 40 # amount of distinct lambdas to evaluate
 lbd_seq = np.linspace(0, 0.6, steps)
+num_diff_subsets = 90
 cv_error = np.zeros((steps, K))
-
-
+n_1 = n - n_0
 '''
-cross validation
-
-for the error bar, we average over 90 = q - 10 different sub-datasets
-for the test error, we train on 1000 data points and fit on 9000 test datapoints
+for the error bar, we take n = 1000, p = 90, K = 5, and average over 90 different sub-datasets
 '''
-for k in range(q - 10):
-    X = X[n * k: n * (k + 1), 1:]
-    Y = data[n * k: n * (k + 1), 0].reshape(n, 1)
+for t in range(num_diff_subsets):
+    X = msd[n * t: n * (t + 1), 1:]
+    Y = msd[n * t: n * (t + 1), 0].reshape(n, 1)
+    all_indices = set(np.arange(0, n, 1, dtype=int))
     # performing 5-fold CV for each of the 40 optional lambdas
     for i in range(steps):
-        lbd = lbd_seq[i]
+        curr_lbd = lbd_seq[i]
         for j in range(K):
-            test_idx = np.arange(j * batch_size, (j + 1) * batch_size, 1, dtype=int)
+            test_idx = np.arange(j * n_0, (j + 1) * n_0, 1, dtype=int)
             X_test = X[test_idx, :] # 200x90
             Y_test = Y[test_idx, :]
-            train_idx = list(set(np.arange(0, n, 1, dtype=int)) - set(test_idx))
+            train_idx = list(all_indices - set(test_idx))
             X_train = X[train_idx, :] # 800x90
             Y_train = Y[train_idx, :]
-            #beta_hat = np.linalg.inv(X_train.T @ X_train / (n - batch_size) + lbd * np.identity(p)) @ X_train.T @ Y_train / (n - batch_size)
-            beta_hat = np.linalg.inv(X_train.T @ X_train + lbd  * (n - batch_size) * np.identity(p)) @ X_train.T @ Y_train
-            cv_error[i, j] += np.linalg.norm(Y_test - X_test @ beta_hat) ** 2 / batch_size / (q - 10)
+            # computing beta hat -k
+            beta_hat = np.linalg.inv(X_train.T @ X_train + curr_lbd  * n_1 * np.identity(p)) @ X_train.T @ Y_train
+            # cv error for isotropic covariance (sigma_mat = I)
+            # divided by num_diff_subsets since we do it for each
+            cv_error[i, j] += (np.linalg.norm(Y_test - X_test @ beta_hat) ** 2 / n_0 ) / num_diff_subsets
 
 
 lbd_cv_idx = np.argmin(np.mean(cv_error, 1))
@@ -49,11 +74,15 @@ for i in range(steps):
         lbd_cv_debiased_idx = i
         break
 
-# test error
-X_train = data[n * (q - 10): n * (q - 9), 1:] #1000x90
-Y_train = data[n * (q - 10): n * (q - 9), 0]
-X_test = data[n * (q - 9): n * q, 1:] #9000x90
-Y_test = data[n * (q - 9): n * q, 0]
+
+'''
+for the test error, we train on 1000 data points and fit on 9000 test datapoints
+
+'''
+X_train = msd[n * (q - 10): n * (q - 9), 1:] #1000x90
+Y_train = msd[n * (q - 10): n * (q - 9), 0]
+X_test = msd[n * (q - 9): n * q, 1:] #9000x90
+Y_test = msd[n * (q - 9): n * q, 0]
 test_error = np.zeros(steps)
 
 for i in range(steps):
@@ -71,6 +100,7 @@ for i in range(steps):
         lbd_theory_idx = i
         break
 
+
 # Figure 2 (left), cross-validation on the million song dataset
 lb = 0.83
 ub = 0.91
@@ -84,8 +114,9 @@ plt.legend(fontsize=13)
 plt.grid(linestyle='dotted')
 plt.xlabel(r'$\lambda$', fontsize=13)
 plt.ylabel('CV test error', fontsize=13)
-plt.title('data CV', fontsize=13)
+plt.title('MSD CV', fontsize=13)
+print("My program took", time.time() - start_time, " seconds to run")
 plt.show()
-
 print(test_error[lbd_cv_debiased_idx], test_error[lbd_cv_idx], test_error[lbd_smallest_idx])
 print("Debias improve test error by", test_error[lbd_cv_idx] - test_error[lbd_cv_debiased_idx])
+
