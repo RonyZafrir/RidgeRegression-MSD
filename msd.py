@@ -113,7 +113,7 @@ for i in range(steps):
 
 
 '''
-now we'll reproduce figure 2 for MSD
+figure 2
 '''
 lb = 0.83
 ub = 0.92
@@ -123,11 +123,11 @@ plt.plot(lbd_cv * np.ones(10), np.linspace(lb, ub, 10), ls='--', linewidth=3, la
 plt.plot(lbd_cv_debiased * np.ones(10), np.linspace(lb, ub, 10), ls='-.', linewidth=3, label='Debiased CV {:.3f}'.format(test_error[lbd_cv_debiased_idx]))
 plt.plot(lbd_smallest * np.ones(10), np.linspace(lb, ub, 10), ls=':', label='Test error min {:.3f}'.format(test_error[lbd_smallest_idx]), linewidth=3)
 plt.plot(lbd_theory * np.ones(10), np.linspace(lb, ub, 10), ls=':', label='Theory {:.3f}'.format(test_error[lbd_theory_idx]), linewidth=3)
-plt.legend(fontsize=12)
-plt.grid(linestyle='dotted')
-plt.xlabel(r'$\lambda$', fontsize=12)
-plt.ylabel('CV test error', fontsize=12)
-plt.title('MSD CV', fontsize=12)
+plt.legend(fontsize = 12)
+plt.grid(linestyle = 'dotted')
+plt.xlabel(r'$\lambda$', fontsize = 13)
+plt.ylabel('CV test error', fontsize = 13)
+plt.title('MSD CV', fontsize=15)
 #print("My program took", time.time() - start_time, " seconds to run")
 plt.savefig("./CV_msd.png")
 plt.show()
